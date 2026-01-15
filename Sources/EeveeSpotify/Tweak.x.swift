@@ -59,7 +59,7 @@ func activatePremiumPatchingGroup() {
 }
 
 struct EeveeSpotify: Tweak {
-    static let version = "6.4.8"
+    static let version = "6.4.9"
     
     static var hookTarget: VersionHookTarget {
         let version = Bundle.main.infoDictionary!["CFBundleShortVersionString"] as! String
@@ -82,34 +82,99 @@ struct EeveeSpotify: Tweak {
     init() {
         NSLog("[EeveeSpotify] Swift tweak initialization starting...")
         writeDebugLog("Swift tweak initialization starting")
-        NSLog("[EeveeSpotify] Hook target: \(EeveeSpotify.hookTarget)")
+        
+        NSLog("[EeveeSpotify] ========================================")
+        NSLog("[EeveeSpotify] Detecting Spotify version...")
+        NSLog("[EeveeSpotify] Bundle version: \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown")")
+        NSLog("[EeveeSpotify] Detected hook target: \(EeveeSpotify.hookTarget)")
+        NSLog("[EeveeSpotify] ========================================")
+        
         writeDebugLog("Hook target: \(EeveeSpotify.hookTarget)")
         
-        // For 9.1.x, activate premium patching only (lyrics not yet supported)
+        // For 9.1.x, activate premium patching and EXPERIMENTAL lyrics with enhanced logging
         if EeveeSpotify.hookTarget == .v91 {
-            NSLog("[EeveeSpotify] Spotify 9.1.x detected - activating compatible features")
-            writeDebugLog("9.1.x mode - limited feature set")
+            NSLog("[EeveeSpotify] ========================================")
+            NSLog("[EeveeSpotify] Spotify 9.1.x detected - EXPERIMENTAL MODE")
+            NSLog("[EeveeSpotify] ========================================")
+            writeDebugLog("9.1.x mode - testing lyrics with enhanced logging")
             
             // Premium patching
             if UserDefaults.patchType.isPatching {
-                NSLog("[EeveeSpotify] Activating base premium patching for 9.1.x")
+                NSLog("[EeveeSpotify] ✅ Activating base premium patching for 9.1.x")
                 writeDebugLog("Activating base premium patching for 9.1.x")
                 BasePremiumPatchingGroup().activate()
                 writeDebugLog("Base premium patching activated")
             }
             
-            // Note: Custom lyrics are NOT supported on 9.1.x
-            // The lyrics architecture is completely different and requires network request interception
-            // which doesn't work with 9.1.x's lyrics implementation
+            // EXPERIMENTAL: Re-enable lyrics with comprehensive logging
+            let lyricsEnabled = UserDefaults.lyricsSource.isReplacingLyrics
+            writeDebugLog("Lyrics setting check - isReplacingLyrics: \(lyricsEnabled), rawValue: \(UserDefaults.lyricsSource.rawValue)")
+            NSLog("[EeveeSpotify] 📊 Lyrics enabled: \(lyricsEnabled), source: \(UserDefaults.lyricsSource.rawValue)")
+            
+            if lyricsEnabled {
+                NSLog("[EeveeSpotify] ========================================")
+                NSLog("[EeveeSpotify] 🧪 EXPERIMENTAL: Activating lyrics for 9.1.x")
+                NSLog("[EeveeSpotify] Lyrics source: \(UserDefaults.lyricsSource.rawValue)")
+                NSLog("[EeveeSpotify] ========================================")
+                writeDebugLog("EXPERIMENTAL: Activating lyrics hooks for 9.1.x")
+                BaseLyricsGroup().activate()
+                writeDebugLog("Base lyrics hooks activated")
+                NSLog("[EeveeSpotify] ✅ BaseLyricsGroup activated")
+                
+                // Use V91-specific lyrics group
+                V91LyricsGroup().activate()
+                writeDebugLog("V91 lyrics hooks activated for 9.1.x")
+                NSLog("[EeveeSpotify] ✅ V91LyricsGroup activated")
+                NSLog("[EeveeSpotify] 📝 Watch for '⭐️⭐️⭐️' in logs when opening lyrics")
+            } else {
+                NSLog("[EeveeSpotify] ⚠️ Lyrics disabled in settings")
+            }
             
             // Settings integration
-            NSLog("[EeveeSpotify] Activating universal settings integration for 9.1.x")
+            NSLog("[EeveeSpotify] ✅ Activating universal settings integration for 9.1.x")
             writeDebugLog("Activating universal settings integration for 9.1.x")
             UniversalSettingsIntegrationGroup().activate()
             writeDebugLog("Universal settings integration activated")
             
             NSLog("[EeveeSpotify] Initialization complete for 9.1.x (with experimental lyrics)")
             writeDebugLog("Initialization complete for 9.1.x")
+            
+            // Show startup popup with status - DISABLED FOR PRODUCTION
+            // DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+            //     let lyricsStatus = lyricsEnabled ? "✅ ENABLED (\(UserDefaults.lyricsSource.rawValue))" : "❌ DISABLED"
+            //     let sourceName = UserDefaults.lyricsSource.description
+            //     let message = """
+            //     EeveeSpotify \(EeveeSpotify.version)
+            //     Spotify 9.1.x EXPERIMENTAL
+            //     
+            //     📝 Lyrics: \(lyricsStatus)
+            //     Source: \(sourceName)
+            //     
+            //     🔍 Tap 'Start' to capture network requests.
+            //     
+            //     After ~15 requests you'll see if 9.1.6 makes lyrics network calls.
+            //     
+            //     NOTE: If lyrics button is missing, try switching to Musixmatch or Genius in Settings.
+            //     """
+            //     
+            //     PopUpHelper.showPopUp(
+            //         message: message,
+            //         buttonText: "Start Debug",
+            //         secondButtonText: "Skip",
+            //         onPrimaryClick: {
+            //             // Start capturing URLs
+            //             DataLoaderServiceHooks_startCapturing()
+            //             
+            //             DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            //                 PopUpHelper.showPopUp(
+            //                     message: "🔍 Capturing started!\n\nNow open ANY song and tap lyrics.\n\nWait ~15 seconds for results.",
+            //                     buttonText: "OK"
+            //                 )
+            //             }
+            //         }
+            //     )
+            // }
+            
             return
         }
         
